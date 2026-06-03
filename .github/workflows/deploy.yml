@@ -1,0 +1,30 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Read HTML file
+        id: read_file
+        run: |
+          echo "CONTENT<<EOF" >> $GITHUB_OUTPUT
+          cat website/index.html >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Call API Gateway
+        run: |
+          curl -X POST ${{ secrets.API_URL }} \
+          -H "Content-Type: application/json" \
+          -d '{
+                "content": "'"${{ steps.read_file.outputs.CONTENT }}"'",
+                "commitId": "${{ github.sha }}"
+              }'
